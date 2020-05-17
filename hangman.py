@@ -13,7 +13,7 @@ A traditional hangman game.  Customisable hangman art, words, phrases, and dicti
 __author__ = 'thedzy'
 __copyright__ = 'Copyright 2020, thedzy'
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'thedzy'
 __email__ = 'thedzy@hotmail.com'
 __status__ = 'Developer'
@@ -26,47 +26,60 @@ import hangman_art
 
 
 def main():
+    # Load in dictionary file
+    dictionary = options.dictionary.read()
+    options.dictionary.close()
+
+    while True:
+        play(dictionary)
+        if not options.continuous:
+            break
+    print('Game over')
+
+
+def play(dictionary):
     # Initialise the valid character set to latin
     characters_valid = list('abcdefghijklmnopqrstuvwxyz')
 
-    # Get the provided phrase/word to sue of pick
+    # Get the provided phrase/word to use or pick
     if len(options.phrase) > 0:
         word = ' '.join(options.phrase)
     else:
         if options.word is None:
-            # Load in dictionary file
-            dictionary = options.dictionary.read()
-            options.dictionary.close()
-
             # Get a new valid characters from dictionary, make hangman adaptable to other languages
             characters_valid.extend(set(dictionary.lower()))
             characters_valid = list(set(characters_valid))
             dictionary = dictionary.splitlines()
 
             # Take out any line breaks and sort the list for display
-            characters_valid.remove('\n')
+            try:
+                characters_valid.remove('\n')
+            except ValueError:
+                pass
             characters_valid.sort()
 
             # Shuffle to get random words
             # Note: Using shuffle and not choice so that there cannot be a endless loop condition finding a word
             random.shuffle(dictionary)
 
+            length_min, length_max = options.length_min, options.length_max
+
             # Check if we are going to use a word longer than is in the dictionary
             dictionary_length_max = len(max(dictionary, key=len))
-            if options.length_max > dictionary_length_max:
+            if length_max > dictionary_length_max:
                 print('Longest word in dictionary is {} characters, Setting new max'.format(dictionary_length_max))
-                options.length_max = dictionary_length_max
+                length_max = dictionary_length_max
 
             # Make sure min an max values cannot to opposite of each other
-            if options.length_max < options.length_min:
-                options.length_min = options.length_max
+            if length_max < length_min:
+                length_min = length_max
 
             if options.debug:
-                print('Min', options.length_min, ', Max', options.length_max)
+                print('Min', length_min, ', Max', length_max)
 
             # Loop through to find our first match and exit the loop if there is a problem
             for word in dictionary:
-                if options.length_min <= len(word) <= options.length_max:
+                if length_min <= len(word) <= length_max:
                     word = word
                     break
         else:
@@ -82,7 +95,7 @@ def main():
     errors_max = len(hangman_art.objects) - 1  # Maximum amount of errors allows, based on body part count
     errors = 0
     correct = 0
-    character_count = len(set(word.replace(' ', '')))
+    character_count = len(set(word) & set(characters_valid))
 
     # Start puzzle
     while True:
@@ -103,7 +116,7 @@ def main():
 
         # Display the word with blanked out characters
         for character in word:
-            if character in guesses:
+            if character in guesses or not character.isalpha():
                 print(character.upper(), end='')
             else:
                 print('_', end='')
@@ -116,10 +129,14 @@ def main():
         # Check if we won or lost
         if errors >= errors_max:
             print('You lose')
-            exit()
+            if options.continuous:
+                input('\nEnter to continue ')
+            return
         elif correct >= character_count:
             print('You win')
-            exit()
+            if options.continuous:
+                input('\nEnter to continue ')
+            return
 
         # Loop until we have a new character not used before
         while guess in guesses:
@@ -141,6 +158,10 @@ def main():
 
                 if guess in guesses:
                     print('You guessed the letter {} already'.format(guess.upper()))
+
+            # Allow exit
+            if guess == 'exit':
+                exit()
 
             # If solving the puzzle
             if len(guess) > 1:
@@ -232,7 +253,7 @@ if __name__ == '__main__':
     # Dictionary/word/phrase
     parser.add_argument('-d', '--dict', type=argparse.FileType('r'),
                         action='store', dest='dictionary',
-                        default=os.path.join(os.path.dirname(__file__), 'collins_scrabble_words_2019.txt'),
+                        default=os.path.join(os.path.dirname(__file__), 'oxford5000.txt'),
                         help='Dictionary file to use'
                              '\nDefault: %(default)s')
 
@@ -262,11 +283,16 @@ if __name__ == '__main__':
                         help='Minimum word length generated'
                              '\nDefault: %(default)s')
 
+    # Game play options
+    parser.add_argument('-c', '--continuous',
+                        action='store_true', dest='continuous', default=False,
+                        help='Continue until exit'
+                             '\nDefault: %(default)s')
+
     # Testing and debugging
     parser.add_argument('--debug',
                         action='store_true', dest='debug', default=False,
-                        help='Debug the program'
-                             '\nDefault: %(default)s')
+                        help=argparse.SUPPRESS)
 
     options = parser.parse_args()
 
