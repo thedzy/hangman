@@ -33,7 +33,7 @@ You can use a custom dictionary, word or phrase.\
 You can use a custom hangman figure
 
 ```bash
-usage: hangman.py [-h] [-d DICTIONARY] [-w WORD] [-p PHRASE [PHRASE ...]] [-l LENGTH] [-x LENGTH_MAX] [-m LENGTH_MIN] [--debug]
+usage: hangman.py [-h] [-d DICTIONARY] [-w WORD] [-p PHRASE [PHRASE ...]] [-l LENGTH] [-x LENGTH_MAX] [-m LENGTH_MIN] [-c]
 
 A traditional hangman game.
 
@@ -42,7 +42,7 @@ optional arguments:
             show this help message and exit
     -d DICTIONARY, --dict DICTIONARY
             Dictionary file to use
-            Default: /Users/syoung/Documents/GitHub/hangman/collins_scrabble_words_2019.txt
+            Default: /Users/syoung/Documents/GitHub/hangman/oxford5000.txt
     -w WORD, --word WORD
             Word or phrase to use
             Default: Random selection from the dictionary
@@ -58,8 +58,8 @@ optional arguments:
     -m LENGTH_MIN, --min LENGTH_MIN
             Minimum word length generated
             Default: 1
-    --debug
-            Debug the program
+    -c, --continuous
+            Continue until exit
             Default: False
 ```
 
@@ -71,3 +71,10 @@ I think a basic b&w image converter to the stored graphics, maybe online mode.  
 
 ## State?
 No known bugs.  Works.
+
+# New
+## 1.1
+- Added continuous mode
+- Added support for special characters
+- Defaults to oxford 5000 so that the words are not complete unknowns
+- Included oxford 3000 for easier play
